@@ -1,0 +1,480 @@
+{
+  "fileId": "Recursion/print-all-numbers-in-array.ts",
+  "records": {
+    "4816db4ca6001711dab8f623036cbb8967a76240456d03615a9e09d655b9219f": {
+      "docText": "# Print All Numbers in a Nested Array (Recursion)\n\n## The Problem\n\nGiven an array that can contain both numbers and other arrays (arbitrarily\nnested), write a recursive function that prints every number contained\nanywhere inside it.\n\n```\narray = [\n  1, 2, 3,\n  [4, 5, 6],\n  7,\n  [8, [9, 10, 11, [12, 13, 14]]],\n  [15, 16, 17, 18, 19, [20, 21, 22, [23, 24, 25, [26, 27, 29]], 30, 31], 32],\n  33\n]\n```\n\n## Why Not a For Loop?\n\nThe first instinct is usually a simple loop over the array. But a `for`\nloop only works when you know exactly what shape the data is in. Here, we\ndon't: an element could be a plain number, or it could be another array and that array could itself contain more arrays, nested to any depth.\nThere's no certainty about the shape of what we're going to get.\n\nRecursion is the natural fit here: instead of trying to handle every\npossible depth up front, the function just handles *one level* at a time,\nand calls itself again whenever it runs into another array.\n\n## Finding the Base Case\n\nEvery recursive function needs a base case, the point at which it does\nnot do recursion. This is usually taught as \"a check or condition that\nsends control back to the parent function that triggered the call.\" But\nit can help to think of it differently: the base case is whatever *you\ndesign* to prevent the recursive function from running forever. Here,\nthat's simple, when we run into an actual number (not another array),\nthere's nothing left to recurse into, so we print it and move on.\n\n## Walking Through the Call Stack\n\nThe function is `printAllNumbersInAnArray` (nicknamed `PANAA` below for\nshort). The computer uses a **stack** data structure to know what to do\nnext, and this is what makes the whole thing work smoothly without\nmanaging any of it by hand.\n\nFor each element as `forEach` walks through an array:\n- If the element is a number, print it, the base case for that element.\n- If the element is an array, call `PANAA` on it again this pushes a\n  new call onto the stack.\n\nOnce a call finishes looping through every element in its own array, it\ngets popped off the stack, and control goes back to its parent call, which then continues looping through its own remaining elements, right\nwhere it left off. This keeps happening, call after call finishing and\npopping off, until the stack is completely empty. At that point, every\nnumber at every depth has been printed.\n\n## The Code\n\n```typescript\ntype NumberOrNestedArray = number | NumberOrNestedArray[];\n\nfunction printAllNumbersInAnArray(arrayGiven: NumberOrNestedArray[]): void {\n  // Iterate through the list\n  arrayGiven.forEach((element) => {\n    if (typeof element === \"number\") {\n      console.log(number);\n    } else {\n      printAllNumbersInAnArray(element);\n    }\n  });\n}\n```\n\n## Typing an Arbitrarily Nested Array\n\nA natural question here: how do you even describe the *type* of \"a list\nthat holds numbers, or arrays of numbers, or arrays of arrays of\nnumbers... nested to any depth\" and does TypeScript need to check that\nat runtime?\n\nTypeScript handles this with a **recursive type alias**, a type that\nrefers to itself in its own definition:\n\n```typescript\ntype NumberOrNestedArray = number | NumberOrNestedArray[];\n```\n\nThe compiler resolves this once, at compile time, no matter how deep the\ndata actually ends up nested when the program runs, there's no need to\ntype-check depth as data comes in. What this doesn't do is guarantee\nevery element really is a number or a further nested array at runtime, that's still the job of the `typeof element === \"number\"` check inside\nthe function itself.",
+      "members": [
+        {
+          "type": "TSTypeAliasDeclaration",
+          "hash": "a56d08405e67b3fcff17058be59e3ce269c8933b496f75ff9bf256c75480cae2",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "2d0100352e8663b5d746d402d5e26f917bc83fba7511628080e7386bb6a55ad7",
+          "isLeaf": true
+        },
+        {
+          "type": "TSUnionType",
+          "hash": "3495b634630285b2f9c5766eb8012544bf7108111bda048c4bfe8463f9922dc6",
+          "isLeaf": false
+        },
+        {
+          "type": "TSNumberKeyword",
+          "hash": "66e029cd8374a0f9b96d125c056ab4c58b2b2c8700253394e1fea2984691ae66",
+          "isLeaf": true
+        },
+        {
+          "type": "TSArrayType",
+          "hash": "ae9a70e8dd2129647c85e6b64038bd1c010630ff86c53778f9c378803bd1cf01",
+          "isLeaf": false
+        },
+        {
+          "type": "TSTypeReference",
+          "hash": "95b88b24e7b9f985d7e5642b751e41b8b0bee3c2db2a93408faaa0b3a4ab14ed",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "2d0100352e8663b5d746d402d5e26f917bc83fba7511628080e7386bb6a55ad7",
+          "isLeaf": true
+        },
+        {
+          "type": "FunctionDeclaration",
+          "hash": "f7e01d00774e6580f7ceb6d063249374713b89121b65c93220602a8bd7fe4cde",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "89ffed971bbb4f11d5d598db081231471321735bd3d99295f35cfd21d5bfe868",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "cd661c136004e108c5ae033243faa059cae648e62ac49996a250f6a014fba248",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "e88a68c2676ca0ad5dc64d97efbb3f248c51f5683b39fd3bd5a63f830cea1fcd",
+          "isLeaf": false
+        },
+        {
+          "type": "TSArrayType",
+          "hash": "ae9a70e8dd2129647c85e6b64038bd1c010630ff86c53778f9c378803bd1cf01",
+          "isLeaf": false
+        },
+        {
+          "type": "TSTypeReference",
+          "hash": "95b88b24e7b9f985d7e5642b751e41b8b0bee3c2db2a93408faaa0b3a4ab14ed",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "2d0100352e8663b5d746d402d5e26f917bc83fba7511628080e7386bb6a55ad7",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "217e6b9440f5101dd88a50bafb023e2ccb075baa733cc469e95da025bb61a2ec",
+          "isLeaf": false
+        },
+        {
+          "type": "TSVoidKeyword",
+          "hash": "6ab209f0399a7e57bde5e8ecc97d42448fb720ece42c7ef57d199c24b987bd09",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "241463c8ea445b2c26920757759c71c3c1f2a243f5728ea8de4ef865b3521254",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "7df0ca4f4f94f2cb28b1e0657a7aba32e093befeef01c88fac6e853a6e7faf84",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "2507643977920bdf6107df18d96e2cd9a0f96e8f0b08c100e7963d73164c92b4",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "5dc7642d8219d6c15b6fa279410a9c05038ea66e2b714650b4d9c14bcea58a40",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "5c7b1d9b22635bb63ffe2a96e4b50a224df9977f53fa7fe6bc7dc8193593bcc9",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "71b3e881bd941cc23cbeccf4ac5f8b4d8ef81ccf6b8b86cccece3a9748ec56c1",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrowFunctionExpression",
+          "hash": "be85505fed5ea807f2dc8e5d54532acc794e009ff48dbe6658f57abfd0b40844",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "2ac711fdf4af4ec420f62313d4f9a560013938b6c33af58e437cec44af7ff2b5",
+          "isLeaf": false
+        },
+        {
+          "type": "IfStatement",
+          "hash": "b70695a94fae49c0121c80e0a18df9c8b71b57d72c3f3ea1acb41701e5cccbc8",
+          "isLeaf": false
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "a05bce9469e011c905801345d0ed70d357b3f337fcdf13d327b4538b9d66c619",
+          "isLeaf": false
+        },
+        {
+          "type": "UnaryExpression",
+          "hash": "8a4293c5ede8b2cdc33c31aee7b3e11e9762949c2c2706d62937cd1e74b86845",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "StringLiteral",
+          "hash": "37d90969feb008cc14482bea32883ff2d9fdf17562a064eb2e1914f014b6511a",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "5585b7cdb18bbab8ac9ee65a017e67c08b8cbe760a570a00e83585029ff100f7",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "46ba12900ae8c871fe0c47d090e667f56778c9aba91d89f5352bf68cc76600dd",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "f0c2802109326e8e97d6b0c233fb6160cd81c2395a9a706572457086dd3a1ce7",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "66a27a659fdb4c1d83939c0df26929b8e099acad25d680f19cc2309dfafde7a2",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "f250e9a96278252f8c59bd01c5589872694f0083f06fcc66d137b84166f867d5",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "22d786d28887689509315feb338fa3ed0aea953603083bee34159e62ba4fc27d",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "f664fe77e38eef16b82bb60284a421cdf0353474b0e2f2556482a42c06efab6f",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "bca16b676c8cace71f45fae6fae479ae0f9108f836de179c895104f121b9daa9",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "d3e96616ef867912cc5c7291b9d749447c65a38b84d45c445997b37b5ea4bc23",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "89ffed971bbb4f11d5d598db081231471321735bd3d99295f35cfd21d5bfe868",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "f73a573f65def89d67a66d2bf8c2549aec7d1b73461bbe558d9e43f3d86c6552",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "25af3f6ac569ef1c73793e5b33a5b293a698e68280bfbbf662971a299db40777",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "9c42ada1c23eeae70b11e98491021a1b0a1aac647d096100d283eafb6d83bcc6",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "e88a68c2676ca0ad5dc64d97efbb3f248c51f5683b39fd3bd5a63f830cea1fcd",
+          "isLeaf": false
+        },
+        {
+          "type": "TSArrayType",
+          "hash": "ae9a70e8dd2129647c85e6b64038bd1c010630ff86c53778f9c378803bd1cf01",
+          "isLeaf": false
+        },
+        {
+          "type": "TSTypeReference",
+          "hash": "95b88b24e7b9f985d7e5642b751e41b8b0bee3c2db2a93408faaa0b3a4ab14ed",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "2d0100352e8663b5d746d402d5e26f917bc83fba7511628080e7386bb6a55ad7",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "8fdb73af6a31c32ea6e041a7db0fee19bfcb99f01bedb9b0450788b2d68b3e0e",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "2721de5be0db719fd5dec81ab5ab6cc12db951ee86767470f5e5fe68f9615bf4",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "9847c45d76cbcf22bdba0329b7676d8697b39d8da8afd875411b5f474263ee29",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "2631c1000e7ce49a65888cc402c6367c80d0d3cd56e83d237f04a7735dd838a3",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "ddb9969a93322f899e4a9d477fbb9692f15403c1af40be14471637341d02062d",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "47c55e0dc2b13f6986c6efc33f9455311aeba10118ca9ccd9531fb6001f48236",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "f40cc54348f5dab41bcaf0e9379f46642d499b18dcb4ba1d369860c57ce99be4",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "4360ea58cdf721f731bfacbdfe33a4f897135e05c616f5ac3c8a4a8df15a3fc8",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "9b0015414feb5a3768de6456b03d7aab57ef14cb66aff43801ac2b7636ca5246",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "70b23c73c143349484deccccdc9ff6a9b16121072584291b6e6ab1a64efb5372",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "d966ff058cc1b95c75b96f65e1dbb2f1e06c2c36c662b20deef72e097840771a",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "47fdbeb49b62a217e4e34dbad13414ac8aa8c885b46ecbdfaf7ec68b79f40a47",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8a68ffdc6850c6bd00156b11b8ecc62ad63e4f6be86a8fa6e15a59e2bbb9095f",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "773d8e3f789fc6c68c5a7d2b5baaa6d447c6011d81f8b808f0f0a508383b7c2d",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "6b328ebeebbbd2acd1447a409ad6f14c1a6edac18dee882220a2293babf556de",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "ee67f9331e891026c8575035b16f4b8344696a06b1b3fb97b93204fd83872776",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "06ff023ccdf2c0fc87a7c9528c0cccc96b7c16d2c97c93af55ff5cb3f19a1f80",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "bc1bd3607075d7f8e9dceffe2ffd6505c6c48b998a3faee6512d6875dfca6936",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "1d2811d32da60913b0233bc5b6fce6e4a95322c9ad394e947ce6bee1bf5b77de",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "269dabc4de94ed9930b8dfbad314580a9c6ee20906cddb8f293e9d627cd64efe",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "a68defe3ad7466a1c9ef22bda906e843acc797c8597ee05a80ea89f6e7d44219",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "b70111f1c5539a59e48dae5661004bff2b2e7928bb833e591f052de59abb9e21",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "484554b20749000b6c5d1344895ec8810bb8e60f6af57b480e422f82b9fe96d2",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "e333d4d11fb8836d4ed0a063aa306b60024d1a580b5f739ad677538b4233d9b1",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "ee3acc660b8ff47b5414eb05a83d681d368371f474cedbb4a279be2d1c7ab33d",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "b14eef471f790515fd5f98e69b3e1d46367ec0b815b44a85b9deee48e3918109",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "e50610eb945516599197200a77f6a206ab6e4637b2dc98459f0ef744ae7de926",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8bfd035eb1e7bf8d097865afaea55d4b105d5dd113e24b13d11258450210d0b6",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "37e45694ec0086f5c15b7d63d7733e4de2aa0c4628aca38d9d00d519a06ba9b1",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "6835fdbfdfce9666086c742da692ca1d2939c8a6c1c5b35fd2dbd91f39ceba5a",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "2920b3fe3260a3bbbaf243fd3c062c75da05c6d5f7f5b6763da9121753c84296",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "044ca238a78d381dffd547b6cd9102f23acb93e6a9d0ff712130d83d42bf1381",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "618a810de4be4b04790647d63b41c74269eb0ea1f84e9a67029f841926422e49",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "a9018841310fae3c5a9707526a683cb21b56cfc42022c3f9d8213c94d386929e",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "5aa2a2bab7c64e07ab2fc593b5c2e4d36414cff936a236e1fd346ae00f8ca8ff",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "d19f9e9506c73a354def43a20bf30047f90862bf5626c6de80c3f64bdb8dcf0a",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "4c369607946917bd3972a98f61ca9c4f238b4f43aff011425a5c535cdb9067bf",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "aa808a92a1e4da8caecbea81f66dcd52fa6d4919525d12ae450cc0e91b30273b",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "eef21a35231f2c5f1fbec6564255cc55e20cf3a199caa9991eab9298470d0263",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "0a9c7a517356d03ef5233a77a79a25b937884d9399b58e0dfcdc8eacfb3e6553",
+          "isLeaf": true
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "8cbcf6703132c50637acf9ae858f861e765a031c2b35cebcdc36c93aa4cba2f4",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "19c6a992fdc4035d911e880215ec5f04eb6e9d89eb5c35ebf46a8a9b8ac296b7",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "89ffed971bbb4f11d5d598db081231471321735bd3d99295f35cfd21d5bfe868",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "e865a68b78ffa4eac1b9f466dd7b03dbf0c9d9bc018e0bf0962ab5b0c50047cb",
+          "isLeaf": true
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,665 @@
+{
+  "fileId": "Recursion/find-anagrams.ts",
+  "records": {
+    "2be7dfc7edcfe7ddb941bd85e770b340448f307617cdff25540b5c3795c23430": {
+      "docText": "# Finding All Anagrams of a String (Recursion)\n\n## The Problem\n\nGiven a string, return every possible ordering (permutation) of its\ncharacters, each one using every character exactly once.\n\n## Step One: Finding the Pattern by Hand\n\nBefore writing any code, the first move was to work out small examples by\nhand and count how many anagrams each one had:\n\n- `\"a\"` → 1 anagram\n- `\"bc\"` → 2 anagrams\n- `\"abc\"` → 6 anagrams\n- `\"bade\"` → 24 anagrams\n\n1, 2, 6, 24, that's the factorial sequence. The number of anagrams of a\nstring is the factorial of its length. If the problem only asked for the\n*count* of anagrams, that fact alone would be the entire answer, no\nrecursion or array-building needed, just compute the factorial of the\nlength. But the actual problem asks for the anagrams themselves, so the\nfactorial insight only confirms *how many* results to expect, not what\nthey are.\n\n## Step Two: The Two Recursive Mental Models\n\nThe book's advice for recursion is to think top-down, and two ways of\ndoing that stood out:\n\n1. **Assume someone else already wrote the recursive function correctly**,\n   trust it to do its job on a smaller version of the problem, and just\n   build on top of whatever it hands back.\n2. **Find the sub-problem**, a smaller version of the exact same problem,\n   hiding inside the original one.\n\n## Step Three: Spotting the Sub-Problem\n\nWorking through `\"bade\"` by hand, writing out every one of its 24\norderings, the sub-problem became clear: pull off the first character,\nand treat the *rest* of the string as its own, smaller anagram problem.\n\nFor `\"bade\"`: removing `\"b\"` leaves `\"ade\"`, a 3-character sub-problem\nwith 3! = 6 anagrams of its own. Each of those six `\"ade\"` anagrams turns\ninto a full `\"bade\"` anagram once `\"b\"` is put back on the front of it,\none quarter of the 24 total, right there. Since every character gets its\nown turn being pulled out first, the other three characters (`a`, `d`,\n`e`) each produce their own group of 6 as well, and 4 × 6 = 24, matching\nthe factorial count found earlier.\n\nThat's the recursive shape: for every character in the string, pull it\nout, recursively find every anagram of what's left, then glue that\ncharacter back onto the front of each of those smaller anagrams.\n\n![Manual factorial pattern and the full 24-anagram breakdown of \"bade\"](../whiteboard/anagram/anagram1.jpeg)\n\n## Step Four: The Bracket Notation\n\nWorking out how this would actually flow in code, including how the\nrecursion eventually comes back and gets combined (the backtracking\npart), the pseudocode used three kinds of brackets to keep the pieces\nstraight:\n\n- `{ }`, the base case list: what gets returned when there's nothing left\n  to recurse on.\n- `( )`, the small list: the current character glued onto the front of\n  each anagram coming back from the recursive call on the rest of the\n  string.\n- `[ ]`, the big list: where every small list gets collected, across\n  every character's turn at the front, this is what the function\n  ultimately returns.\n\n![Tracing find_anagram(\"abc\") through the recursive calls with the {}/()/[] notation](../whiteboard/anagram/anagram_2.jpeg)\n\n## Step Five: Writing the General Method\n\nSince this has to work for a string of any length, the function needs:\n\n- a loop over every character in the string (each one gets a turn being\n  pulled out front)\n- string slicing, to build \"the rest of the string\" with one character\n  removed\n- a recursive call on that sliced-down remainder\n- another loop, to glue the pulled-out character onto every anagram the\n  recursive call returns\n- a final loop, to append each of those combined anagrams into the big\n  list being returned\n\n![The rough pseudocode draft for the general findAnagram method](../whiteboard/anagram/anagram3.jpeg)\n\n## Step Six: A Debugging Detour\n\nThe first working attempt (`anagrams.py`) reused the letter `i` as the\nloop variable in all three loops: the outer loop over each character, and\nboth inner loops. That's a real bug, not just a style choice; once the\nfirst inner loop runs `for i in range(0, len(anagram_array))`, it\noverwrites the outer loop's `i` for the rest of that pass through the\nouter loop. So by the time the code tries to grab \"the character\ncurrently pulled out front\" using `anagram[i]`, `i` no longer holds the\nouter loop's position at all, it's leftover from the inner loop, pointing\nat the wrong character entirely. Printing the values of `anagram`, `i`,\nand the in-progress lists at each step (still in that file) is what made\nthe mismatch visible.\n\nThe fix (`anagrams_correct.py`) was to give every loop its own name,\n`char` for the outer loop, `pair` for the first inner loop, `element` for\nthe second, so each one keeps its own value independent of the others.\nOnce that was in place, running it produced exactly the expected\nanagrams.\n\n## The Code (Python: `anagrams_correct.py`)\n\n```python\ndef findAnagram(anagram):\n    if len(anagram) == 0:\n        return []\n    if len(anagram) == 1:\n        return [anagram]\n\n    bigList = []\n    for char in range(0, len(anagram)):\n        anagram_array = findAnagram(anagram[0:char] + anagram[char+1:])\n        smallList = []\n        for pair in range(0, len(anagram_array)):\n            smallList.append(anagram[char] + anagram_array[pair])\n\n        for element in range(0, len(smallList)):\n            bigList.append(smallList[element])\n\n    return bigList\n\nprint(findAnagram(\"bade\"))\n```\n\n## The Code (TypeScript translation)\n\n```typescript\nfunction findAnagram(anagram: string): string[] {\n  if (anagram.length === 0) {\n    return [];\n  }\n  if (anagram.length === 1) {\n    return [anagram];\n  }\n\n  const bigList: string[] = [];\n  for (let char = 0; char < anagram.length; char++) {\n    const anagramArray = findAnagram(anagram.slice(0, char) + anagram.slice(char + 1));\n    const smallList: string[] = [];\n    for (let pair = 0; pair < anagramArray.length; pair++) {\n      smallList.push(anagram[char] + anagramArray[pair]);\n    }\n\n    for (let element = 0; element < smallList.length; element++) {\n      bigList.push(smallList[element]);\n    }\n  }\n\n  return bigList;\n}\n\nconsole.log(findAnagram(\"bade\"));\n```\n\nRunning it prints all 24 anagrams of `\"bade\"`, matching the factorial\ncount worked out by hand in Step One.\n",
+      "members": [
+        {
+          "type": "ExportNamedDeclaration",
+          "hash": "f8b54e518f6134a58c4e9942d906c1750bba4682b853e8b102036471c22f6f72",
+          "isLeaf": false
+        },
+        {
+          "type": "FunctionDeclaration",
+          "hash": "c9f3b9419f3b4e97743d9702836006a59bdf4aa8dd8c46068d36f9d4adcfdd26",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "16be623bc990a72b10cd94249e97203b1495e82e4fd1a9388e61a52e17a0e745",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "51a06f875fdbe228d4f186fb5437eba7b7673d3649aae953fd197b897e7aa121",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "d3004c7ad2a35ea22e8e13dd13d88b3cbd5f377ab798f8c451f68ba087ff202d",
+          "isLeaf": false
+        },
+        {
+          "type": "TSStringKeyword",
+          "hash": "f8cb762ca03482dc7cb122ad7afada4b76bbcc710378ed8150ca259ff1dd8b3f",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "41dcbf8feae4d562ba0e5a9aab19397cd0b8a6800c7451875ff72752f3db5040",
+          "isLeaf": false
+        },
+        {
+          "type": "TSArrayType",
+          "hash": "8379deb8e4ef224dcea4a1ff31fccd763fe5f78cb23c04b2fa255729a5d68f5c",
+          "isLeaf": false
+        },
+        {
+          "type": "TSStringKeyword",
+          "hash": "f8cb762ca03482dc7cb122ad7afada4b76bbcc710378ed8150ca259ff1dd8b3f",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "36de21ba2c2d36f20d7dc4a86903d05119e654269c58e3067c477e9e51a9b3e9",
+          "isLeaf": false
+        },
+        {
+          "type": "IfStatement",
+          "hash": "839907532fb5a7a886d489745337cda2e21665f81613329aab93ff700b96a7f2",
+          "isLeaf": false
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "d1a49b437b0803a7522234603c250c1ead4cfe14e36c3a3c7cc9dbfe8d6525e6",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "f6d287250b12afca95a247729a338d688004c980b591928f6c6ffe1017cf423a",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "82b5cc458e9e6ef7dede74af5af8dbdda2a683f53b264b6308146b37862e7acc",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "8e01e7eacf40f06db6a8d03eebbd7bfed67cdf925f86c4513c1997cf85452de6",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "fae59e90cff11b2093a2cab9767dd262cb23aa265b3c9092b434db11acba3be8",
+          "isLeaf": false
+        },
+        {
+          "type": "ReturnStatement",
+          "hash": "e04a52d7275a1aaf0637bc0f20925c18fba98c7a63a721f2880c0507f180ba85",
+          "isLeaf": false
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "c8b83403023918d0a2bcb5bf18c24ed5dd0f0d0a6296b6e5bf4ea410c31b3b30",
+          "isLeaf": true
+        },
+        {
+          "type": "IfStatement",
+          "hash": "eea5bef1928d41b3ac71116e9422ad85fa8375d1156dd051a5411bf098887822",
+          "isLeaf": false
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "0af0eb7e2fc32183d80ece0940dd90a69d8b6282c1e78f31ef2e2ff4f42c4569",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "f6d287250b12afca95a247729a338d688004c980b591928f6c6ffe1017cf423a",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "82b5cc458e9e6ef7dede74af5af8dbdda2a683f53b264b6308146b37862e7acc",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "8e01e7eacf40f06db6a8d03eebbd7bfed67cdf925f86c4513c1997cf85452de6",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "295d9d11d140170f09d552ce8701677395e7f72611cb8645d1c075b36673b994",
+          "isLeaf": false
+        },
+        {
+          "type": "ReturnStatement",
+          "hash": "a426fb6588009a5a6fa81523dae86e4aa4b0d1f770449e1e57a2b1873be1b650",
+          "isLeaf": false
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "1ce27c8f8943e509c3d6d024d99114c196165967519245762b229c9d2e71ccb0",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "82b5cc458e9e6ef7dede74af5af8dbdda2a683f53b264b6308146b37862e7acc",
+          "isLeaf": true
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "d76d3b585f384ae0c546792a4cde92164ce0f7486ba28fda065eb61b93d65c4a",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "1641ab9d8897c56fa1b80a43aa9d327e509d2006980235705f32e68cc94a8c37",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "38d04dc7896e72644485b3c304a60d2d1f25a369dc6ef622f1b05d5ac9b85ccd",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "41dcbf8feae4d562ba0e5a9aab19397cd0b8a6800c7451875ff72752f3db5040",
+          "isLeaf": false
+        },
+        {
+          "type": "TSArrayType",
+          "hash": "8379deb8e4ef224dcea4a1ff31fccd763fe5f78cb23c04b2fa255729a5d68f5c",
+          "isLeaf": false
+        },
+        {
+          "type": "TSStringKeyword",
+          "hash": "f8cb762ca03482dc7cb122ad7afada4b76bbcc710378ed8150ca259ff1dd8b3f",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "c8b83403023918d0a2bcb5bf18c24ed5dd0f0d0a6296b6e5bf4ea410c31b3b30",
+          "isLeaf": true
+        },
+        {
+          "type": "ForStatement",
+          "hash": "e92ba6c11f92018759b2581271aafb4f2cf77c444ed94ae58a34be7cddd9b50b",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "8e368e17c8eceb25ad21500602920a5544d3178a2fdc988f43b22d812b958589",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "04fe1c1621288126e68a342e1b9fc741cb69ff1376230c40a769b6244ec125dd",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "44a9475492aa16ffbeb5b3ad3cec2ce5eac3c080767b7a9a9e7b12b5c6da0b6d",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "c59bb844bdbf886aa52daa175247f072cf69a585d493b43c9a93ab97caee0894",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "44a9475492aa16ffbeb5b3ad3cec2ce5eac3c080767b7a9a9e7b12b5c6da0b6d",
+          "isLeaf": true
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "f6d287250b12afca95a247729a338d688004c980b591928f6c6ffe1017cf423a",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "82b5cc458e9e6ef7dede74af5af8dbdda2a683f53b264b6308146b37862e7acc",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "8e01e7eacf40f06db6a8d03eebbd7bfed67cdf925f86c4513c1997cf85452de6",
+          "isLeaf": true
+        },
+        {
+          "type": "UpdateExpression",
+          "hash": "c3cbb3a48f2ad2a4545339a7c84c30afa9e8905b4f56e18ec70990de932a4908",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "44a9475492aa16ffbeb5b3ad3cec2ce5eac3c080767b7a9a9e7b12b5c6da0b6d",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "454214de8a4848197a635bcb70d75d592fe68c04374d61d2b00a86777a6ef644",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "04d415b46aeb7c48ce8dd058b5c36bb9290c0ae03cc66c574e95ebe952d6a4b6",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "414ee5225755f4c1745ea689d7b03b10edc9481a0a08a1c150f1557850b6556f",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "220e224bafb363ba445a2c578141cafed9dcc5269538452425c1342f5c0b2a77",
+          "isLeaf": true
+        },
+        {
+          "type": "CallExpression",
+          "hash": "58be7910cdbb13678c013a05752df5a0b3b97e6cac51e5a1c7cd277a32db3c9a",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "16be623bc990a72b10cd94249e97203b1495e82e4fd1a9388e61a52e17a0e745",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "a548dbe14adb8da8cf3d5383f69eed9f8e408cc87b786209d82b11a9e89b4b4d",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "980082c535215e137cf89b6d4f66bb1ca691c8484295f94f435d273332d91e52",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "6f286da87a56f0ec03055185b67996aa86e2141a90549e28a88b1ea0f317fba6",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "82b5cc458e9e6ef7dede74af5af8dbdda2a683f53b264b6308146b37862e7acc",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "6150668fcd41a25899aca12d4d0ad09ca19a56e5d62c9e44d8f6f01c0617e665",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "44a9475492aa16ffbeb5b3ad3cec2ce5eac3c080767b7a9a9e7b12b5c6da0b6d",
+          "isLeaf": true
+        },
+        {
+          "type": "CallExpression",
+          "hash": "b367847b348e1feb19d106d45378e6f49c08384e021052a8a806ff71cc203a3b",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "6f286da87a56f0ec03055185b67996aa86e2141a90549e28a88b1ea0f317fba6",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "82b5cc458e9e6ef7dede74af5af8dbdda2a683f53b264b6308146b37862e7acc",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "6150668fcd41a25899aca12d4d0ad09ca19a56e5d62c9e44d8f6f01c0617e665",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "473bdd3e87f341a2a98228e9d643503bac76d85ae30825a6a2f10701bd088c96",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "44a9475492aa16ffbeb5b3ad3cec2ce5eac3c080767b7a9a9e7b12b5c6da0b6d",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "505acc63664d04f96471053776d334815e5f7b72fa22497966b911ede8665c62",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "0b7e0d0acd891e2ce68e545c2f3ec5042ccadaf676d3522f7c1c7d9d792cb051",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "2531b15b97e16096b6a6936180fa508eb8d002de1a687568ee9a9bdcd78dd4e7",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "41dcbf8feae4d562ba0e5a9aab19397cd0b8a6800c7451875ff72752f3db5040",
+          "isLeaf": false
+        },
+        {
+          "type": "TSArrayType",
+          "hash": "8379deb8e4ef224dcea4a1ff31fccd763fe5f78cb23c04b2fa255729a5d68f5c",
+          "isLeaf": false
+        },
+        {
+          "type": "TSStringKeyword",
+          "hash": "f8cb762ca03482dc7cb122ad7afada4b76bbcc710378ed8150ca259ff1dd8b3f",
+          "isLeaf": true
+        },
+        {
+          "type": "ArrayExpression",
+          "hash": "c8b83403023918d0a2bcb5bf18c24ed5dd0f0d0a6296b6e5bf4ea410c31b3b30",
+          "isLeaf": true
+        },
+        {
+          "type": "ForStatement",
+          "hash": "fa8bae5f77060df2b9f97ea3953e79de55eb92f082cad414ee0ce80226004073",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "4de3c9d245b685f980dae318fec513ee098ae2781ce227d241497bb908eb8cf0",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "bca3f4bee50e05bc9f2b842460fa326779af44124ea3f60ae62246bd5fe865c8",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "8c17d76791181d823d33d407ce670747106dc99ee91cb432f6c906da044d6ebc",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "6cc2f0dd78d95a6e0c5a8d7c0fffbc5a4f5d3c7135992438f377616c98a04105",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "8c17d76791181d823d33d407ce670747106dc99ee91cb432f6c906da044d6ebc",
+          "isLeaf": true
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "32347aab982a5f7ed88cd05f4bdd3fe8666af1be9d0a601e6b568afb7cc16595",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "220e224bafb363ba445a2c578141cafed9dcc5269538452425c1342f5c0b2a77",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "8e01e7eacf40f06db6a8d03eebbd7bfed67cdf925f86c4513c1997cf85452de6",
+          "isLeaf": true
+        },
+        {
+          "type": "UpdateExpression",
+          "hash": "98c4517f43e7bae49b512b72e1c6d1606216d73dbae7e6718706c18107cc9591",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "8c17d76791181d823d33d407ce670747106dc99ee91cb432f6c906da044d6ebc",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "dbdb6afdc13d090798a35f339fbd4a8cff124832f26b0044e3f3db8b27986014",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "5604eb6d26162dc6da0df45cd43b9cae5395b9591242c73a59f72ee4c71aff51",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "74f507ab09e2333ec7f11b9d1f0f00b0efbe522948f1848242df9d82d7212886",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "a6d013927300dd3ae1e0daa0b01dbf94b648cc3d823cce368e28657a6a8d50e7",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b5773e906bf7adb6f3e4ca52b828c67cb586eb53894e5853e5b07b7ed0ddc936",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "cb57600f41186589595867dbb7008367130f17aa6c1e449658e7746e009ff01f",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "c95ccad2af9c65f7378936a3213ab36795d0b90f5e06c33309548f58598ebf9c",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "b06834fe5309f2e065c514b45cf0f4409a9ae1f06404df37a98af50da5185921",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "82b5cc458e9e6ef7dede74af5af8dbdda2a683f53b264b6308146b37862e7acc",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "44a9475492aa16ffbeb5b3ad3cec2ce5eac3c080767b7a9a9e7b12b5c6da0b6d",
+          "isLeaf": true
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "c4d514f2ea9e38c01b3dbe2ba6bf8345bdc6e87719503a273b187a5c338ae850",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "220e224bafb363ba445a2c578141cafed9dcc5269538452425c1342f5c0b2a77",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "8c17d76791181d823d33d407ce670747106dc99ee91cb432f6c906da044d6ebc",
+          "isLeaf": true
+        },
+        {
+          "type": "ForStatement",
+          "hash": "c8e135697b19d13f9a4ed9c77996c9da316fa3735e5de2104ccc6269cf764a1a",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "cb513ba7cb5f725251f57518a493fa669dc09cbfe0f8831874e2980132b088f1",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "cdddfb3c4119dcd27b04d76b4981952d9e7ef4c626b25905e7b6987996884d9f",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "854fc3219ee19880aa6170a8e9fc1c4113d5e575966bf5a4da7ff4e6a9d6c816",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "3413774e71ab25f69b03bb340720589e9e60438dace517266a4ff223238365fa",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b5773e906bf7adb6f3e4ca52b828c67cb586eb53894e5853e5b07b7ed0ddc936",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "8e01e7eacf40f06db6a8d03eebbd7bfed67cdf925f86c4513c1997cf85452de6",
+          "isLeaf": true
+        },
+        {
+          "type": "UpdateExpression",
+          "hash": "dae48e6326f5d6d8c02b80542c96f009a42a969e6e470d68e01366c06ff11038",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "02938319f0f13faf58607fcaef4df2fa63ebedba0a631744682badd0a69eba15",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "e90ee835e64e76c619c049ae1a4adbbbbbd88642feac3fe4a325459256ca480d",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "6c7088a233ddd0cfcbc49872b3b6af7b08f82b5ac62d60b7a2121a129d9758dd",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "47fdfb03402fa7ed5da9d7e37d8e9d357e306cb14f747e628da96ef228794177",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "f91f78202c5ac32202f7530f194c66670d801721fbe47ea4ee66d94efa4b607b",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "cb57600f41186589595867dbb7008367130f17aa6c1e449658e7746e009ff01f",
+          "isLeaf": true
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "4ef598f0ab2931df32678cf0362a49a703e98a7fab718f86587874ca1c262150",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b5773e906bf7adb6f3e4ca52b828c67cb586eb53894e5853e5b07b7ed0ddc936",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "394487eaf648e603964fe9571bc550ec7206fc18e9f70d596fd95565115ab740",
+          "isLeaf": true
+        },
+        {
+          "type": "ReturnStatement",
+          "hash": "63018c0fdec29a4b28bdd4ccad92ddc7857c053fd8bb606dda0cd1931de5c4f4",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "f91f78202c5ac32202f7530f194c66670d801721fbe47ea4ee66d94efa4b607b",
+          "isLeaf": true
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "f91f00e528fb871afb5c519845cdbd3771503e79a3d4b9f8e876b9a42f8edc99",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "4386165ec148d2e0d9019d3c2cf534f92b0891e774dde4e23ce23521646a9934",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "66a27a659fdb4c1d83939c0df26929b8e099acad25d680f19cc2309dfafde7a2",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "f250e9a96278252f8c59bd01c5589872694f0083f06fcc66d137b84166f867d5",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "22d786d28887689509315feb338fa3ed0aea953603083bee34159e62ba4fc27d",
+          "isLeaf": true
+        },
+        {
+          "type": "CallExpression",
+          "hash": "c79f66a58fdaf94c06510b665f79069824a37da62b3ceaaf3d03411e684404b6",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "16be623bc990a72b10cd94249e97203b1495e82e4fd1a9388e61a52e17a0e745",
+          "isLeaf": true
+        },
+        {
+          "type": "StringLiteral",
+          "hash": "61ca8d96a5ad9cb6c07c883fd60eea02b68989d6acbff73e66f596729359f977",
+          "isLeaf": true
+        }
+      ]
+    }
+  }
+}
