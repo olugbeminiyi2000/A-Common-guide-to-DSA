@@ -1,0 +1,445 @@
+{
+  "fileId": "Recursion/shortest-path.ts",
+  "records": {
+    "c3b8ff08dce7bf7a8bc78f8bba7a2ea088ab8666bffd9d9ad3e02fdbb2b8e34a": {
+      "docText": "# Counting Shortest Paths in a Grid (Unique Paths, Recursion)\n\n## The Problem\n\nYou have a grid of rows and columns. Write a function that accepts a\nnumber of rows and a number of columns, and calculates the number of\npossible \"shortest\" paths from the upper-leftmost square (the start, `S`)\nto the lower-rightmost square (the finish, `F`).\n\nBy \"shortest\" path, the book means that at every step you move either one\nstep to the right or one step downward. The function should return the\n*number* of shortest paths, not the paths themselves.\n\n## Step One: What \"Shortest\" Really Means Here\n\nThe word \"shortest\" made this look like a much harder problem at first. It\nsuggests you would have to find one path, go back and try the others,\nkeep a record of every path's length, find the smallest, and finally\ncount how many paths hit that smallest length.\n\nBut the two constraints in the problem remove all of that. The path must\nstart at the top-left corner and end at the bottom-right corner, and the\nonly allowed moves are right and down. Drawing a 3 by 3 grid by hand and\ntracing every unique path showed that every single path takes exactly the\nsame number of steps: the same number of moves to the right, and the same\nnumber of moves down, just in a different order. Since no path can ever\nbe shorter or longer than another, \"shortest\" carries no extra meaning.\nThe question simplifies to something much easier: **count every unique\npath from the start to the finish.**\n\n![shortestpath_3.jpeg](<Recursion/whiteboard/shortest-path/shortestpath_3.jpeg>)\n\n![shortestpath_3.jpeg](<Recursion/whiteboard/shortest-path/shortestpath_3.jpeg>)\n\n\n\n\n## Step Two: Labeling the Grid With a Countdown\n\nThe function takes two numbers, `right` and `down`. They describe how\nmany columns and how many rows are left to cover, counting the square\nyou are currently standing on. So on a 3 by 3 grid, the start square is\n`(3, 3)` and the finish square is `(1, 1)`. Moving one step to the right\nturns `right` into `right - 1`, and moving one step down turns `down`\ninto `down - 1`. Reaching `(1, 1)` means there is nothing left to cover,\nwhich means one complete path has been found.\n\n## Step Three: The Base Case\n\nThe recursion stops when `right == 1` and `down == 1`, and it returns `1`\nbecause reaching that square means exactly one shortest path has been\nseen. Every complete path ends here, so adding up all the `1`s that come\nback from the recursive calls gives the total number of paths.\n\nThe function also starts with a counter, `numShortestPath = 0`, which\ncollects the number of paths found beneath the current square and is\nwhat gets returned at the end.\n\n## Step Four: The Two Possible Moves\n\nFrom any square, there are two things you can do, so the function makes\nup to two recursive calls:\n\n- **Move right**: `shortestPath(right - 1, down)`\n- **Move down**: `shortestPath(right, down - 1)`\n\nWhatever number of paths each call reports back gets added to the\ncounter. The moves are split across an `if` and an `else`: while\n`right > 1` there is still room to move right, so the function tries the\nright move first and then the down move. Once `right` has reached `1`,\nthe last column has been reached, so the only thing left to do is move\ndown.\n\n![shortestpath_2.jpeg](<Recursion/whiteboard/shortest-path/shortestpath_2.jpeg>)\n\n## Step Five: Tracing the Recursion by Hand, and the Trick\n\nTo make sure this worked before writing it as code, the recursion was\ntraced by hand on the 3 by 3 grid. The trace starts at `(3, 3)` and keeps\nmoving right until it can't, reaching `(1, 3)`, then moves down through\n`(1, 2)` to `(1, 1)`, which returns `1`. The function then backs up, one\ncall at a time, and each time it backs up to a square it tries the move\nit hasn't tried yet from there, which is how the other paths get found.\n\nThat hand trace is where the trick in the code came from. While walking\nback up through `(2, 2)`, the trace reaches `(2, 1)`. This square is on\nthe bottom row, and the natural next step in the pattern would be to\nalso try moving down from it. But `(2, 1)` is on the last row, so there\nis no row below it to move down to. The condition on the down move,\n`down != 1`, exists for exactly this reason: **the down move is only made\nwhen there is still a row below the current square.** On the bottom row,\nthe down call is skipped, and the only thing left to do from `(2, 1)` is\nstep right to `(1, 1)`. The same happens for `(3, 1)`, which is reached\nfrom `(3, 2)`: it does not branch, it just walks straight along the\nbottom row to the finish.\n\n![shortestpath_1.jpeg](<Recursion/whiteboard/shortest-path/shortestpath_1.jpeg>)\n\n### Why the guard matters\n\nBecause both moves always shrink `right` or `down`, the recursion always\nheads toward the finish square, so the function terminates either way.\nWhat the `down != 1` guard controls is whether the function wastes calls\nstepping off the bottom edge of the grid. Without it, calls from the\nbottom row would land on a row that doesn't exist, and those calls end up\nreturning `0` (they are caught by the `down < 0` check at the top), so\nthe final count comes out the same. With the guard, those pointless calls\nnever happen. Checking this directly on the 3 by 3 grid, the function\nmakes 19 calls with the guard and 37 without it, and both give the\nanswer 6.\n\n## The Answer for the Example\n\nThe book's example is a grid with three rows and seven columns. The call\nhere is `shortestPath(3, 7)`, which reads as 3 columns by 7 rows, the\nflipped version of the book's grid. A grid and its flip have exactly the\nsame number of paths, since swapping \"right\" and \"down\" just swaps which\nkind of move you make more often, so the answer is the same: **28**.\n\n## The Code (Python: `shortest-path.py`)\n\n```python\ndef shortestPath(right, down):\n    numShortestPath = 0\n    if right < 0 or down < 0:\n        return numShortestPath\n    if right == 1 and down == 1:\n        return 1\n    if right > 1:\n        numShortestPath = shortestPath(right - 1, down)\n        if down != 1:\n            numShortestPath += shortestPath(right, down - 1)\n    else:\n        numShortestPath += shortestPath(right, down - 1)\n\n    return numShortestPath\n\nprint(shortestPath(3, 7))\n```\n\n## The Code (TypeScript translation)\n\n```typescript\nexport function shortestPath(right: number, down: number): number {\n  let numShortestPath = 0;\n  if (right < 0 || down < 0) {\n    return numShortestPath;\n  }\n  if (right === 1 && down === 1) {\n    return 1;\n  }\n  if (right > 1) {\n    numShortestPath = shortestPath(right - 1, down);\n    if (down !== 1) {\n      numShortestPath += shortestPath(right, down - 1);\n    }\n  } else {\n    numShortestPath += shortestPath(right, down - 1);\n  }\n\n  return numShortestPath;\n}\n\nconsole.log(shortestPath(3, 7));\n```\n\nRunning it prints `28`, matching the number of shortest paths worked out\nfor the book's example.\n",
+      "members": [
+        {
+          "type": "ExportNamedDeclaration",
+          "hash": "68140562c571f4501bb25c732414b21e132b98c1dd4f8c3b2df22d9cb865f203",
+          "isLeaf": false
+        },
+        {
+          "type": "FunctionDeclaration",
+          "hash": "880becb7b56ab020b16dde26ca05a2aaef4b426d9bf92e5f342083449b03305d",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b6a3e0af2b4766ebf35e5a41d13e18e9cfb25b57a812f880af22723c58d3fe51",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "ec3763728c3fd24b158a953c25f661e94e70ca350799ce575a5f79a1fda8fedd",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "edd111d94908fbed3f118442e38cf21e5dceffd61de631a5ef31157b90a1111b",
+          "isLeaf": false
+        },
+        {
+          "type": "TSNumberKeyword",
+          "hash": "66e029cd8374a0f9b96d125c056ab4c58b2b2c8700253394e1fea2984691ae66",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "0167b7aeb71eb66803108fdbf9a8afb76c7a7c9c6a2106355066636088198961",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "edd111d94908fbed3f118442e38cf21e5dceffd61de631a5ef31157b90a1111b",
+          "isLeaf": false
+        },
+        {
+          "type": "TSNumberKeyword",
+          "hash": "66e029cd8374a0f9b96d125c056ab4c58b2b2c8700253394e1fea2984691ae66",
+          "isLeaf": true
+        },
+        {
+          "type": "TSTypeAnnotation",
+          "hash": "edd111d94908fbed3f118442e38cf21e5dceffd61de631a5ef31157b90a1111b",
+          "isLeaf": false
+        },
+        {
+          "type": "TSNumberKeyword",
+          "hash": "66e029cd8374a0f9b96d125c056ab4c58b2b2c8700253394e1fea2984691ae66",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "cec6da7df412b19ce199095de7ce5f887aa3a70fbfdb6ec2ba22afc516d72765",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclaration",
+          "hash": "1a933c3451af476ae928fe090f55827ce04a6b545c50a6ca9292c131a8af53cb",
+          "isLeaf": false
+        },
+        {
+          "type": "VariableDeclarator",
+          "hash": "128b5b7c7097e7360a69ff57f87536ffe4e43a4e5871da13d4638c5c85919df8",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "823f60d9861096794afd2e75ec689f3221cd7d833feeafa90ea88a69f9b2c3cc",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "IfStatement",
+          "hash": "09078db7a809847c96207843b7e7f3a93ce2306cc12a3e0b339e841ee82587c5",
+          "isLeaf": false
+        },
+        {
+          "type": "LogicalExpression",
+          "hash": "54be59ca5fa89a0d1724058b25dd7b16757ff0d92a0ba92a9e1d8276d884d7b7",
+          "isLeaf": false
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "2425fdb18092303c7ff0d405ebd892db1a4736747bba263657cf62b38e99296f",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "c3ff47bbb631781d65d9fdffca3c8dda1b2a36eb2cf5fa2e05f754aace58b4ea",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "443d07a3660160d738e13e58bf4350a17015b38ed000e4eeeb45ab1646fa2d7c",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "91377b975a3b1b7d92baa4a14f490b7efa9d3e6f429bf64cfb799adfbdaee318",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "8d6cd21a7ac6d940a3e24eff4a623b75927d7f075b0c9d785fd19cd4c131e604",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "6c6add0c94cfb7c3ed01c18781a10ecb7085deffa233fe48fff7e3b4f2980bd5",
+          "isLeaf": false
+        },
+        {
+          "type": "ReturnStatement",
+          "hash": "aaf22bd36c2251876680814731413a716954aa0f4494c16fd8ca1b045aca0448",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "823f60d9861096794afd2e75ec689f3221cd7d833feeafa90ea88a69f9b2c3cc",
+          "isLeaf": true
+        },
+        {
+          "type": "IfStatement",
+          "hash": "0ff31a7666f4088c826b5e890f006f80d43b4b68ef17aa7482360245cdbdec27",
+          "isLeaf": false
+        },
+        {
+          "type": "LogicalExpression",
+          "hash": "dfed98de30c5f83116f7b5e3f167b54aa9f989e8f8e693e4b9ad4b68e2b02417",
+          "isLeaf": false
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "7d729f6fc5e897ff6d3b0b68425c2c3a3b25cc3d011bf3e1a973368c2409313b",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "c3ff47bbb631781d65d9fdffca3c8dda1b2a36eb2cf5fa2e05f754aace58b4ea",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "2bec1b5a813862a9dd1d4dd12c98755c653a845dcb207bd67776db89daf183cd",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "91377b975a3b1b7d92baa4a14f490b7efa9d3e6f429bf64cfb799adfbdaee318",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "eca8f2b930dd1202fbcf878c4b975168709fb0d45d0c7647e199082904038eb3",
+          "isLeaf": false
+        },
+        {
+          "type": "ReturnStatement",
+          "hash": "f84d4b7fd9796673d81e63dc0c7dec9f6008d5a46d22684b82303c0e474b6f3a",
+          "isLeaf": false
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "IfStatement",
+          "hash": "bdc478cd8de5854717c6bcd964a8026f6fa7bc832a4bbc99c10e80f33828c23f",
+          "isLeaf": false
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "f745936f35e5a1b701c25cb7f95ce429056d695e96b3335e7a298174d559d772",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "c3ff47bbb631781d65d9fdffca3c8dda1b2a36eb2cf5fa2e05f754aace58b4ea",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "974822bbc5ef5d0c202fd48b4515b6d3ec3bb46f27b0e534ae4612adb8bfb3db",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "9f999ae02da6103972e021236d928cf87981bc5e6939b4525fd58971aff44295",
+          "isLeaf": false
+        },
+        {
+          "type": "AssignmentExpression",
+          "hash": "a5616b443e4c5442acfdde7e6ee40a5a2e6a280f0121f436ab00dc70ddbcb9be",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "823f60d9861096794afd2e75ec689f3221cd7d833feeafa90ea88a69f9b2c3cc",
+          "isLeaf": true
+        },
+        {
+          "type": "CallExpression",
+          "hash": "8046cf47c569b70b33273f52a7403ff707c2d1901dcc6163b92785b141cdfb46",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b6a3e0af2b4766ebf35e5a41d13e18e9cfb25b57a812f880af22723c58d3fe51",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "911db9e06e16db88d690cb4b64d1d0a4d2dde7d3432d6236ffa609938104ed0e",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "c3ff47bbb631781d65d9fdffca3c8dda1b2a36eb2cf5fa2e05f754aace58b4ea",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "91377b975a3b1b7d92baa4a14f490b7efa9d3e6f429bf64cfb799adfbdaee318",
+          "isLeaf": true
+        },
+        {
+          "type": "IfStatement",
+          "hash": "5709dea4fca1e3e901449fb701fb8c6207252b9407cf442210f19dd76bd376d2",
+          "isLeaf": false
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "90f6265894228029d9988ea43a8f2596011460c5b107851a3901b7103164239f",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "91377b975a3b1b7d92baa4a14f490b7efa9d3e6f429bf64cfb799adfbdaee318",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "bdfa50ac6e45c3785bcf5828b1bf9a5cf59c646222f81313cc45958706d8acbb",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "1cc7d81624e0a279868c9c8142da7cbcbdfc06bd8e2958b1070f6a9aa1960cb3",
+          "isLeaf": false
+        },
+        {
+          "type": "AssignmentExpression",
+          "hash": "1aa6916ccd88587fde12b1bdbcb01838f079c3cc9c9f778850059113abaf1c83",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "823f60d9861096794afd2e75ec689f3221cd7d833feeafa90ea88a69f9b2c3cc",
+          "isLeaf": true
+        },
+        {
+          "type": "CallExpression",
+          "hash": "b1d9a958d578a842e872a870eb2a1371e7a296affaae5860cb660afadde475ee",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b6a3e0af2b4766ebf35e5a41d13e18e9cfb25b57a812f880af22723c58d3fe51",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "c3ff47bbb631781d65d9fdffca3c8dda1b2a36eb2cf5fa2e05f754aace58b4ea",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "b8db4ed6dff3bebf42f69fd968db367838cd063bba4e1f05a1530f7de2dc2ea3",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "91377b975a3b1b7d92baa4a14f490b7efa9d3e6f429bf64cfb799adfbdaee318",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "BlockStatement",
+          "hash": "bdfa50ac6e45c3785bcf5828b1bf9a5cf59c646222f81313cc45958706d8acbb",
+          "isLeaf": false
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "1cc7d81624e0a279868c9c8142da7cbcbdfc06bd8e2958b1070f6a9aa1960cb3",
+          "isLeaf": false
+        },
+        {
+          "type": "AssignmentExpression",
+          "hash": "1aa6916ccd88587fde12b1bdbcb01838f079c3cc9c9f778850059113abaf1c83",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "823f60d9861096794afd2e75ec689f3221cd7d833feeafa90ea88a69f9b2c3cc",
+          "isLeaf": true
+        },
+        {
+          "type": "CallExpression",
+          "hash": "b1d9a958d578a842e872a870eb2a1371e7a296affaae5860cb660afadde475ee",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b6a3e0af2b4766ebf35e5a41d13e18e9cfb25b57a812f880af22723c58d3fe51",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "c3ff47bbb631781d65d9fdffca3c8dda1b2a36eb2cf5fa2e05f754aace58b4ea",
+          "isLeaf": true
+        },
+        {
+          "type": "BinaryExpression",
+          "hash": "b8db4ed6dff3bebf42f69fd968db367838cd063bba4e1f05a1530f7de2dc2ea3",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "91377b975a3b1b7d92baa4a14f490b7efa9d3e6f429bf64cfb799adfbdaee318",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "db926790953ad0d1a44a33766a69262824dcfb92a85e8ec4be6d887c35437f97",
+          "isLeaf": true
+        },
+        {
+          "type": "ReturnStatement",
+          "hash": "aaf22bd36c2251876680814731413a716954aa0f4494c16fd8ca1b045aca0448",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "823f60d9861096794afd2e75ec689f3221cd7d833feeafa90ea88a69f9b2c3cc",
+          "isLeaf": true
+        },
+        {
+          "type": "ExpressionStatement",
+          "hash": "b8f23014a714568894bdceb327e4f73cb3557eb5860754312bd7e79766b7df96",
+          "isLeaf": false
+        },
+        {
+          "type": "CallExpression",
+          "hash": "30c9053d24dc9ec38d8e30adefb02e4d2974c376a85c178698040cf2af4e76f9",
+          "isLeaf": false
+        },
+        {
+          "type": "MemberExpression",
+          "hash": "66a27a659fdb4c1d83939c0df26929b8e099acad25d680f19cc2309dfafde7a2",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "f250e9a96278252f8c59bd01c5589872694f0083f06fcc66d137b84166f867d5",
+          "isLeaf": true
+        },
+        {
+          "type": "Identifier",
+          "hash": "22d786d28887689509315feb338fa3ed0aea953603083bee34159e62ba4fc27d",
+          "isLeaf": true
+        },
+        {
+          "type": "CallExpression",
+          "hash": "2059ec6ad56bbc19ade5123108b7d92418f5d2c83c9bed9deda1da978af47e6f",
+          "isLeaf": false
+        },
+        {
+          "type": "Identifier",
+          "hash": "b6a3e0af2b4766ebf35e5a41d13e18e9cfb25b57a812f880af22723c58d3fe51",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "9847c45d76cbcf22bdba0329b7676d8697b39d8da8afd875411b5f474263ee29",
+          "isLeaf": true
+        },
+        {
+          "type": "NumericLiteral",
+          "hash": "4360ea58cdf721f731bfacbdfe33a4f897135e05c616f5ac3c8a4a8df15a3fc8",
+          "isLeaf": true
+        }
+      ]
+    }
+  }
+}
